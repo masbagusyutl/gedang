@@ -2,9 +2,15 @@ import requests
 import time
 import random
 
-def read_authorizations(file_path):
+def read_authorizations_and_cookies(file_path):
     with open(file_path, 'r') as file:
-        return [line.strip() for line in file.readlines()]
+        lines = file.readlines()
+        authorizations_and_cookies = []
+        for i in range(0, len(lines), 2):
+            authorization = lines[i].strip()
+            cookie = lines[i + 1].strip()
+            authorizations_and_cookies.append((authorization, cookie))
+        return authorizations_and_cookies
 
 def make_post_request(url, payload, headers):
     response = requests.post(url, json=payload, headers=headers)
@@ -34,7 +40,7 @@ def generate_random_user_agent():
     ]
     return random.choice(user_agents)
 
-def tap_tap_task(authorization, user_agent):
+def tap_tap_task(authorization, cookie, user_agent):
     headers = {
         "Accept": "application/json, text/plain, */*",
         "Accept-Encoding": "gzip, deflate, br, zstd",
@@ -42,6 +48,7 @@ def tap_tap_task(authorization, user_agent):
         "Authorization": authorization,
         "Cache-Control": "no-cache",
         "Content-Type": "application/json",
+        "Cookie": cookie,
         "Origin": "https://banana.carv.io",
         "Pragma": "no-cache",
         "Referer": "https://banana.carv.io/",
@@ -75,15 +82,15 @@ def tap_tap_task(authorization, user_agent):
 
 def main():
     auth_file = 'data.txt'
-    authorizations = read_authorizations(auth_file)
-    total_accounts = len(authorizations)
+    auth_and_cookies = read_authorizations_and_cookies(auth_file)
+    total_accounts = len(auth_and_cookies)
     user_agents = [generate_random_user_agent() for _ in range(total_accounts)]
 
     print(f"Total accounts to process: {total_accounts}")
 
-    for index, authorization in enumerate(authorizations):
+    for index, (authorization, cookie) in enumerate(auth_and_cookies):
         print(f"Processing account {index+1}/{total_accounts} with user agent: {user_agents[index]}...")
-        tap_tap_task(authorization, user_agents[index])
+        tap_tap_task(authorization, cookie, user_agents[index])
         print(f"Finished processing account {index+1}/{total_accounts}.")
         time.sleep(5)
 
